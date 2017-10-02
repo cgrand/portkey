@@ -109,7 +109,7 @@
     (when-some [classname (if-some [[_ t] (re-matches #"\[+(?:[ZBCDFIJS]|L(.*);)" x)]
                              t
                              (when-not (primitive? x)
-                               (.replace ^String x \/ \.)))] 
+                               (.replace ^String x \/ \.)))]
       (when-some [class (try (Class/forName classname false *classloader*)
                           (catch ClassNotFoundException _)
                           (catch java.lang.IncompatibleClassChangeError _
@@ -294,7 +294,7 @@
    f must be a function of 3 arguments: input, output and context. (See RequestHandler)
    Additionally, more classes and vars can be specified, forcing them to be kept in the
    package."
-  [out f & keeps]
+  [out f keeps]
   (let [fbom (bom f)
         resources (into {}
                         (comp (filter string?)
@@ -324,7 +324,7 @@
                   (when-some [[op & ops] (seq ops)]
                     (if (keyword? op)
                       (case op
-                        :when 
+                        :when
                         (let [[_ test m & ops] ops]
                           (cons [:when test m] (parse ops))))
                       (cons [:set op] (parse ops))))))
@@ -494,7 +494,7 @@
 (defn deploy! [f lambda-function-name {:keys [keeps environment-variables vpc-config]
                                        :or {environment-variables {}}}]
   (let [bb (-> (java.io.ByteArrayOutputStream.)
-               (doto (package! f keeps))
+               (doto (package! f (seq keeps)))
                .toByteArray)]
     (when-not (try-some (fetch-portkey-role))
       (let [role (-> (build com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder)
@@ -631,7 +631,7 @@ and `argnames` a collection of argument names as symbols."
     {:url (str "https://" api-id ".execute-api." region ".amazonaws.com/" stage (:path parsed-path))}))
 
 (defmacro mount! [f path & {:as opts :keys [live]}]
-  (if-some [var-f (cond 
+  (if-some [var-f (cond
                     (and (symbol? f) (not (contains? &env f)))
                     (list 'var f)
                     (and (seq? f) (= 'var (first f))) f)]
@@ -641,7 +641,7 @@ and `argnames` a collection of argument names as symbols."
                              :lambda-function-name `(as-> (meta ~var-f) x# (str (:ns x#) "/" (:name x#)) (#'aws-name-munge x#))}
                         opts)))]
        (when ~live
-         (add-watch ~var-f 
+         (add-watch ~var-f
            :portkey/watch (fn [_# _# _# _#] (mnt!#))))
        (mnt!#))
     `(mount-fn ~f ~path ~opts)))
