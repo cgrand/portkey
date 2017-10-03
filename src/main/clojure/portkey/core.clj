@@ -494,7 +494,7 @@
 (defn deploy! [f lambda-function-name {:keys [keeps environment-variables vpc-config]
                                        :or {environment-variables {}}}]
   (let [bb (-> (java.io.ByteArrayOutputStream.)
-               (doto (package! f (seq keeps)))
+               (doto (package! f keeps))
                .toByteArray)]
     (when-not (try-some (fetch-portkey-role))
       (let [role (-> (build com.amazonaws.services.identitymanagement.AmazonIdentityManagementClientBuilder)
